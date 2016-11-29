@@ -2,19 +2,30 @@ import math
 import random
 import matplotlib.pyplot as plt
 
-g_CONVERGE_CONDITION = 0.01
+false = False
+true = True
+
+g_CONVERGE_THRESHOLD = 0.0001
 g_ALPHA = 0.01
 g_TRAIN_DATA_RANGE_PERCENT = 0.8
 g_BANK_DATA_ADDRESS = 'data_banknote_authentication.txt'
 g_K_FOLD_ARG = 5
 g_NaN = float('nan')
-g_LEARNING_FACTORS_LOOP_SIZE = 10
+g_LEARNING_FACTORS_LOOP_SIZE = 50
+g_MAX_CONVERGENCE_ITERATION = 500
 
 
 # <editor-fold desc="Train Function">
 def train(alpha, x_matrix, y_list):
+    # x_matrix_copy = x_matrix[:]
+    x_matrix_copy = []
+    for row in x_matrix:
+        row_copy = []
+        for i in row:
+            row_copy.append(i)
+        x_matrix_copy.append(row_copy)
     print 'Training started...',
-    c = len(x_matrix[0])
+    c = len(x_matrix_copy[0])
     r = len(y_list)
 
     # Coefficients Initialization
@@ -23,20 +34,21 @@ def train(alpha, x_matrix, y_list):
     # <editor-fold desc="Normalization">
     for i in range(c):
         # min_x = x_matrix[0][i]
-        max_x = x_matrix[0][i]
+        max_x = math.fabs(x_matrix_copy[0][i])
         for j in range(1, r):
             # if min_x > x_matrix[j][i]:
             #     min_x = x_matrix[j][i]
-            if max_x < x_matrix[j][i]:
-                max_x = x_matrix[j][i]
+            x = math.fabs(x_matrix_copy[j][i])
+            if max_x < x:
+                max_x = x
         for j in range(r):
-            x_matrix[j][i] /= 1.0 * max_x
+            x_matrix_copy[j][i] /= 1.0 * max_x
             # x_matrix[j][i] = 1.0 * (x_matrix[j][i] - min_x) / (max_x - min_x)
     # </editor-fold>
 
     iter = 0
-    repeat = True
-    while repeat:
+    repeat = true
+    while repeat and (iter < 500):
         a_ = a_list[:]
         s = lambda a_list, x_list: sum(map(lambda a, x: a * x, a_list, x_list))  # < Likelihood
         g = lambda z: 1.0 / (1 + math.e ** (-z))
@@ -44,16 +56,22 @@ def train(alpha, x_matrix, y_list):
             map(lambda y, x_list, j, a_list: (y - g(s(a_list, x_list))) * x_list[j], y_list, x_matrix,
                 [column_index] * r, [a_list] * r))  # < Log Likelihood
         for c_i in range(c):
-            a_[c_i] = round(a_list[c_i] + alpha * log_l(y_list, x_matrix, c_i, a_list), 2)
+            a_[c_i] = round(a_list[c_i] + alpha * log_l(y_list, x_matrix_copy, c_i, a_list), 2)
 
-        repeat = False
+        # repeat = False
+        # for i in range(c):
+        #     # repeat = repeat or (math.fabs(a_[i] - a_list[i]) > g_CONVERGE_CONDITION)
+        #     repeat = math.fabs(a_[i] - a_list[i]) > g_CONVERGE_THRESHOLD
+        #     if repeat:
+        #         break
+        #     elif i == c-1:
+        #         break
+        conv_cond = 0
         for i in range(c):
-            # repeat = repeat or (math.fabs(a_[i] - a_list[i]) > g_CONVERGE_CONDITION)
-            repeat = math.fabs(a_[i] - a_list[i]) > g_CONVERGE_CONDITION
-            if repeat:
-                break
-            elif i == c-1:
-                break
+            if math.fabs(a_[i] - a_list[i]) < g_CONVERGE_THRESHOLD:
+                conv_cond += 1
+        if conv_cond >= (c / 2):
+            repeat = false
 
         a_list = a_[:]
         iter += 1
@@ -227,7 +245,6 @@ for k in range(g_K_FOLD_ARG):
     print '\navg\\total', '\t', prec_avg, '\t\t', recall_avg, '\t\t', f1_avg, '\t\t', (orig_count + fake_count)
     print '===================================='
     # </editor-fold>
-print '************************************'
 print '************************************\n'
 # </editor-fold>
 ''''''
@@ -245,7 +262,8 @@ plt.plot(alpha_list, iter_list, 'ro')
 min_iter = min(iter_list) - 1
 max_iter = max(iter_list) + 1
 plt.axis([0, 1, min_iter, max_iter])
-plt.title('Iteration per alpha')
+plt.title('Iteration per alpha ( converge threshold =' + str(g_CONVERGE_THRESHOLD) + ')')
 plt.xlabel('Alpha')
 plt.ylabel('Iteration')
+plt.grid(true)
 plt.show()
