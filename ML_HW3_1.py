@@ -4,15 +4,14 @@ import matplotlib.pyplot as plt
 
 false = False
 true = True
+NaN = float('nan')
 
-g_CONVERGE_THRESHOLD = 0.0001
-g_ALPHA = 0.01
-g_TRAIN_DATA_RANGE_PERCENT = 0.8
+g_CONVERGE_THRESHOLD = 0.1
+g_ALPHA = 0.6
 g_BANK_DATA_ADDRESS = 'data_banknote_authentication.txt'
 g_K_FOLD_ARG = 5
-g_NaN = float('nan')
 g_LEARNING_FACTORS_LOOP_SIZE = 50
-g_MAX_CONVERGENCE_ITERATION = 500
+g_MAX_CONVERGENCE_ITERATION = 200
 
 
 # <editor-fold desc="Train Function">
@@ -47,8 +46,9 @@ def train(alpha, x_matrix, y_list):
     # </editor-fold>
 
     iter = 0
+    # <editor-fold desc="Convergence Loop">
     repeat = true
-    while repeat and (iter < 500):
+    while repeat and (iter < g_MAX_CONVERGENCE_ITERATION):
         a_ = a_list[:]
         s = lambda a_list, x_list: sum(map(lambda a, x: a * x, a_list, x_list))  # < Likelihood
         g = lambda z: 1.0 / (1 + math.e ** (-z))
@@ -58,7 +58,7 @@ def train(alpha, x_matrix, y_list):
         for c_i in range(c):
             a_[c_i] = round(a_list[c_i] + alpha * log_l(y_list, x_matrix_copy, c_i, a_list), 2)
 
-        # repeat = False
+        # repeat = false
         # for i in range(c):
         #     # repeat = repeat or (math.fabs(a_[i] - a_list[i]) > g_CONVERGE_CONDITION)
         #     repeat = math.fabs(a_[i] - a_list[i]) > g_CONVERGE_THRESHOLD
@@ -77,11 +77,11 @@ def train(alpha, x_matrix, y_list):
         iter += 1
         # print 'iter', iter, ': ', a_list
     # print '---------------------------------'
+    # </editor-fold>
+
     print 'Training finished'
     print 'a_list: ', a_list
     return a_list, iter
-
-
 # </editor-fold>
 
 
@@ -99,8 +99,6 @@ def predict(a_list, x_matrix):
     # print 'Predicted labels', predicted_class
     print 'prediction finished.'
     return predicted_class
-
-
 # </editor-fold>
 
 
@@ -217,19 +215,19 @@ for k in range(g_K_FOLD_ARG):
     # print 'Original Precision =', 1.0 * T0 / (T0 + F1)
     # print 'Fake Precision =', 1.0 * T1 / (T1 + F0)
     if (T0 + F0) == 0:
-        orig_prec = g_NaN
+        orig_prec = NaN
     else:
         orig_prec = round(1.0 * T0 / (T0 + F0), 2)
     if (T1 + F1) == 0:
-        fake_prec = g_NaN
+        fake_prec = NaN
     else:
         fake_prec = round(1.0 * T1 / (T1 + F1), 2)
     if (T0 + F1) == 0:
-        orig_recall = g_NaN
+        orig_recall = NaN
     else:
         orig_recall = round(1.0 * T0 / (T0 + F1), 2)
     if (T1 + F0) == 0:
-        fake_recall = g_NaN
+        fake_recall = NaN
     else:
         fake_recall = round(1.0 * T1 / (T1 + F0), 2)
     orig_f1score = round(2.0 * (orig_prec * orig_recall) / (orig_prec + orig_recall), 2)
@@ -257,6 +255,7 @@ for n in range(1, g_LEARNING_FACTORS_LOOP_SIZE + 1):
     print 'alpha =', alpha, '\titeration count =', iter, '\n'
     alpha_list.append(alpha)
     iter_list.append(iter)
+
 
 plt.plot(alpha_list, iter_list, 'ro')
 min_iter = min(iter_list) - 1
