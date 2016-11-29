@@ -13,7 +13,7 @@ g_LEARNING_FACTORS_LOOP_SIZE = 10
 
 # <editor-fold desc="Train Function">
 def train(alpha, x_matrix, y_list):
-    print 'Training started...'
+    print 'Training started...',
     c = len(x_matrix[0])
     r = len(y_list)
 
@@ -245,4 +245,7 @@ plt.plot(alpha_list, iter_list, 'ro')
 min_iter = min(iter_list) - 1
 max_iter = max(iter_list) + 1
 plt.axis([0, 1, min_iter, max_iter])
+plt.title('Iteration per alpha')
+plt.xlabel('Alpha')
+plt.ylabel('Iteration')
 plt.show()
